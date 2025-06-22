@@ -4,7 +4,7 @@ import type React from 'react';
 
 import { useState, useRef, useEffect } from 'react';
 import { BoundingBox } from '@/typings';
-import { Button, Icon } from '@blueprintjs/core';
+import { Button, FileInput, Icon, NonIdealState, Slider, Tooltip } from '@blueprintjs/core';
 import { useAnnotation } from '@/hooks/use-annotation';
 
 export default function ImageAnnotator() {
@@ -21,6 +21,9 @@ export default function ImageAnnotator() {
   const [originalBox, setOriginalBox] = useState<BoundingBox | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPos, setLastPanPos] = useState({ x: 0, y: 0 });
 
   // Load a default image
   useEffect(() => {
@@ -46,6 +49,11 @@ export default function ImageAnnotator() {
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Apply transformations for zoom and pan
+    ctx.save();
+    ctx.translate(panOffset.x, panOffset.y);
+    ctx.scale(scale, scale);
 
     // Draw the image
     ctx.drawImage(image, 0, 0);
@@ -154,7 +162,10 @@ export default function ImageAnnotator() {
       ctx.fillStyle = '#00AAFF33';
       ctx.fillRect(startPos.x, startPos.y, width, height);
     }
-  }, [image, boxes, isDrawing, startPos, currentPos, activeBox]);
+
+    // Restore transformations
+    ctx.restore();
+  }, [image, boxes, isDrawing, startPos, currentPos, activeBox, scale, panOffset]);
 
   // Get resize handle at position
   const getResizeHandle = (x: number, y: number): string | null => {
@@ -183,16 +194,12 @@ export default function ImageAnnotator() {
     return null;
   };
 
-  // Handle mouse down to start drawing, resizing, or dragging
+  // Handle mouse down to start drawing, resizing, dragging, or panning
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!canvasRef.current) return;
 
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-
-    // Calculate the actual position on the canvas, accounting for scaling
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    // Calculate the actual position on the canvas, accounting for scaling and panning
+    const { x, y } = screenToCanvas(e.clientX, e.clientY);
 
     // Check if we're clicking on a resize handle
     const handle = getResizeHandle(x, y);
@@ -238,6 +245,13 @@ export default function ImageAnnotator() {
       }
     }
 
+    // If Command key is held, start panning
+    if (e.metaKey || e.ctrlKey) {
+      setIsPanning(true);
+      setLastPanPos({ x: e.clientX, y: e.clientY });
+      return;
+    }
+
     // Start drawing a new box
     setStartPos({ x, y });
     setCurrentPos({ x, y });
@@ -249,14 +263,12 @@ export default function ImageAnnotator() {
     if (!canvasRef.current) return;
 
     const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
 
-    // Calculate the actual position on the canvas, accounting for scaling
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    // Calculate the actual position on the canvas, accounting for scaling and panning
+    const { x, y } = screenToCanvas(e.clientX, e.clientY);
 
     // Update cursor based on hover position
-    if (!isResizing && !isDrawing && !isDragging) {
+    if (!isResizing && !isDrawing && !isDragging && !isPanning) {
       const handle = getResizeHandle(x, y);
       if (handle) {
         const cursorMap: { [key: string]: string } = {
@@ -277,16 +289,31 @@ export default function ImageAnnotator() {
         );
         canvas.style.cursor = hoveredBox ? 'move' : 'crosshair';
       }
+    } else if (isPanning) {
+      canvas.style.cursor = 'grabbing';
     }
 
-    if (isDragging && originalBox && activeBox) {
+    if (isPanning) {
+      // Handle panning - direct 1:1 movement with mouse
+      const deltaX = e.clientX - lastPanPos.x;
+      const deltaY = e.clientY - lastPanPos.y;
+
+      // Update pan offset directly with mouse movement
+      setPanOffset(prev => ({
+        x: prev.x + deltaX * 10,
+        y: prev.y + deltaY * 10,
+      }));
+
+      // Update last position for next frame
+      setLastPanPos({ x: e.clientX, y: e.clientY });
+    } else if (isDragging && originalBox && activeBox) {
       // Update box position during drag
       const newX = x - dragOffset.x;
       const newY = y - dragOffset.y;
 
       // Ensure box stays within canvas bounds
-      const clampedX = Math.max(0, Math.min(newX, canvas.width - originalBox.width));
-      const clampedY = Math.max(0, Math.min(newY, canvas.height - originalBox.height));
+      const clampedX = Math.max(0, Math.min(newX, canvas.width / scale - originalBox.width));
+      const clampedY = Math.max(0, Math.min(newY, canvas.height / scale - originalBox.height));
 
       const newBox = { ...originalBox, x: clampedX, y: clampedY };
       setBoxes(boxes.map(b => (b.id === activeBox ? newBox : b)));
@@ -344,7 +371,7 @@ export default function ImageAnnotator() {
     }
   };
 
-  // Handle mouse up to finish drawing, resizing, or dragging
+  // Handle mouse up to finish drawing, resizing, dragging, or panning
   const handleMouseUp = () => {
     if (isResizing) {
       setIsResizing(false);
@@ -354,6 +381,9 @@ export default function ImageAnnotator() {
       setIsDragging(false);
       setDragOffset({ x: 0, y: 0 });
       setOriginalBox(null);
+    } else if (isPanning) {
+      setIsPanning(false);
+      setLastPanPos({ x: 0, y: 0 });
     } else if (isDrawing) {
       const width = currentPos.x - startPos.x;
       const height = currentPos.y - startPos.y;
@@ -378,6 +408,12 @@ export default function ImageAnnotator() {
     }
   };
 
+  // Reset zoom and pan
+  const resetView = () => {
+    setScale(1);
+    setPanOffset({ x: 0, y: 0 });
+  };
+
   // Handle file upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -389,8 +425,9 @@ export default function ImageAnnotator() {
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         setImage(img);
-        // Clear existing boxes when loading a new image
+        // Clear existing boxes and reset view when loading a new image
         setBoxes([]);
+        resetView();
       };
       img.src = event.target?.result as string;
     };
@@ -411,81 +448,81 @@ export default function ImageAnnotator() {
     handleBoxSelect(null);
   };
 
+  // Transform screen coordinates to canvas coordinates
+  const screenToCanvas = (screenX: number, screenY: number) => {
+    if (!canvasRef.current) return { x: 0, y: 0 };
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+
+    // Convert screen coordinates to canvas coordinates
+    const canvasX = (screenX - rect.left) * (canvas.width / rect.width);
+    const canvasY = (screenY - rect.top) * (canvas.height / rect.height);
+
+    // Apply inverse transformations
+    const transformedX = (canvasX - panOffset.x) / scale;
+    const transformedY = (canvasY - panOffset.y) / scale;
+
+    return { x: transformedX, y: transformedY };
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full space-y-4" ref={containerRef}>
-      {/* Image Canvas Area */}
-      <div className="flex-1 min-h-[400px] border rounded-lg bg-muted/20 overflow-auto">
-        <div className="relative inline-block">
+      <div className="min-h-[400px] flex items-center justify-center">
+        {image ? (
           <canvas
             ref={canvasRef}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            className="max-w-full cursor-crosshair transition-transform"
+            className="max-w-full cursor-crosshair"
             style={{
               display: image ? 'block' : 'none',
-              transform: `scale(${scale})`,
-              transformOrigin: 'top left',
             }}
           />
-
-          {!image && (
-            <div className="flex items-center justify-center w-full h-64 bg-muted/20">
-              <div className="text-center">
-                <Icon icon="upload" className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground font-medium">Upload an image to annotate</p>
-                <p className="text-xs text-muted-foreground mt-1">Supports JPG, PNG, and other image formats</p>
-              </div>
-            </div>
-          )}
-        </div>
+        ) : (
+          <NonIdealState
+            title="Upload an image to annotate"
+            description="Supports JPG, PNG, and other image formats"
+            icon="upload"
+            action={
+              <FileInput text="Import image" inputProps={{ accept: 'image/*' }} onInputChange={handleImageUpload} />
+            }
+          />
+        )}
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-        <div className="flex items-center gap-3">
-          <Button
-            icon={<Icon icon="zoom-out" />}
-            onClick={() => setScale(Math.max(0.5, scale - 0.1))}
-            disabled={scale <= 0.5}
-            className="hover:shadow-sm transition-all"
-          >
-            Zoom Out
-          </Button>
-          <span className="text-sm font-medium px-3 py-1 bg-background rounded border">{Math.round(scale * 100)}%</span>
-          <Button
-            icon={<Icon icon="zoom-in" />}
-            onClick={() => setScale(Math.min(2, scale + 0.1))}
-            disabled={scale >= 2}
-            className="hover:shadow-sm transition-all"
-          >
-            Zoom In
-          </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Icon icon="minus" />
+          <Slider
+            min={0.2}
+            max={3}
+            stepSize={0.01}
+            value={scale}
+            labelRenderer={false}
+            onChange={value => setScale(value)}
+          />
+          <Icon icon="plus" />
         </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            icon={<Icon icon="delete" />}
-            onClick={deleteActiveBox}
-            disabled={!activeBox}
-            className="hover:shadow-sm transition-all"
-          >
-            Delete Box
-          </Button>
-          <div className="relative">
-            <input
-              type="file"
-              id="image-upload"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        <Tooltip content="Reset view">
+          <Button icon={<Icon icon="reset" />} variant="minimal" onClick={resetView} />
+        </Tooltip>
+        {Boolean(activeBox) && (
+          <Tooltip content="Delete box">
+            <Button
+              icon={<Icon icon="delete" />}
+              variant="minimal"
+              onClick={deleteActiveBox}
+              className="hover:shadow-sm transition-all"
             />
-            <Button icon={<Icon icon="upload" />} className="hover:shadow-sm transition-all">
-              Upload Image
-            </Button>
-          </div>
-        </div>
+          </Tooltip>
+        )}
+        {image && (
+          <FileInput text="Import image" inputProps={{ accept: 'image/*' }} onInputChange={handleImageUpload} />
+        )}
       </div>
     </div>
   );
