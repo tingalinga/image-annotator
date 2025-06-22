@@ -313,7 +313,7 @@ export default function TextAnnotator({
   };
 
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div className="flex-1 flex flex-col h-full space-y-4">
       {/* Text Content Area */}
       <div className="flex-1 min-h-[400px] border rounded-lg bg-muted/20 overflow-hidden">
         {isEditMode ? (

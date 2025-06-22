@@ -207,7 +207,7 @@ export default function ImageAnnotator({
   };
 
   return (
-    <div className="flex flex-col h-full space-y-4" ref={containerRef}>
+    <div className="flex-1 flex flex-col h-full space-y-4" ref={containerRef}>
       {/* Image Canvas Area */}
       <div className="flex-1 min-h-[400px] border rounded-lg bg-muted/20 overflow-auto">
         <div className="relative inline-block">
