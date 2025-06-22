@@ -2,113 +2,61 @@
 
 import ImageAnnotator from '@/components/image-annotator';
 import TextAnnotator from '@/components/text-annotator';
-import { BoundingBox, TextHighlight } from '@/typings';
-import { useState } from 'react';
+import { useAnnotation } from '@/hooks/use-annotation';
+import { Button, Navbar, Switch } from '@blueprintjs/core';
+import { ChangeEvent } from 'react';
 
 export default function Annotator() {
-  const [boxes, setBoxes] = useState<BoundingBox[]>([]);
-  const [highlights, setHighlights] = useState<TextHighlight[]>([]);
-  const [activeBox, setActiveBox] = useState<string | null>(null);
-  const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [autoLink, setAutoLink] = useState(true);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editableText, setEditableText] = useState(
-    `One human is playing ball, while another is watching. The ball is bright red and bouncing high in the air. In the background, there's a tree providing shade on this sunny day. A small dog is sitting nearby, observing the game with curiosity.`
-  );
+  const {
+    boxes,
+    setBoxes,
+    highlights,
+    setHighlights,
+    activeBox,
+    activeHighlight,
+    isDrawing,
+    setIsDrawing,
+    autoLink,
+    setAutoLink,
+    isEditMode,
+    setIsEditMode,
+    editableText,
+    setEditableText,
+    handleBoxSelect,
+    handleHighlightSelect,
+    clearAnnotations,
+    exportAnnotations,
+  } = useAnnotation();
 
-  // Link box to highlight and vice versa
-  const linkAnnotations = (boxId: string, highlightId: string) => {
-    const box = boxes.find(b => b.id === boxId);
-    const highlight = highlights.find(h => h.id === highlightId);
-
-    if (box && highlight) {
-      // Use the highlight's color for both to ensure they match
-      const sharedColor = highlight.color;
-
-      setBoxes(boxes.map(b => (b.id === boxId ? { ...b, textRef: highlightId, color: sharedColor } : b)));
-
-      setHighlights(highlights.map(h => (h.id === highlightId ? { ...h, boxRef: boxId, color: sharedColor } : h)));
-    }
-  };
-
-  // Handle when a box is selected
-  const handleBoxSelect = (boxId: string | null) => {
-    setActiveBox(boxId);
-
-    if (!boxId) {
-      return;
-    }
-
-    const selectedBox = boxes.find(box => box.id === boxId);
-
-    // If the box is already linked to a highlight, make that highlight active
-    if (selectedBox?.textRef) {
-      setActiveHighlight(selectedBox.textRef);
-    }
-    // If auto-link is enabled and there's an active highlight that isn't already linked, link them
-    else if (autoLink && activeHighlight) {
-      const highlight = highlights.find(h => h.id === activeHighlight);
-      if (highlight && !highlight.boxRef) {
-        linkAnnotations(boxId, activeHighlight);
-      }
-    }
-  };
-
-  // Handle when a highlight is selected
-  const handleHighlightSelect = (highlightId: string | null) => {
-    setActiveHighlight(highlightId);
-
-    if (!highlightId) {
-      return;
-    }
-
-    const selectedHighlight = highlights.find(highlight => highlight.id === highlightId);
-
-    // If the highlight is already linked to a box, make that box active
-    if (selectedHighlight?.boxRef) {
-      setActiveBox(selectedHighlight.boxRef);
-    }
-    // If auto-link is enabled and there's an active box that isn't already linked, link them
-    else if (autoLink && activeBox) {
-      const box = boxes.find(b => b.id === activeBox);
-      if (box && !box.textRef) {
-        linkAnnotations(activeBox, highlightId);
-      }
-    }
-  };
-
-  // Generate a JSON export of the annotations
-  const exportAnnotations = () => {
-    const data = {
-      boxes,
-      highlights,
-      text: editableText,
+  const toggle = (setter: (value: boolean) => void) => {
+    return (input: ChangeEvent<HTMLInputElement>) => {
+      setter(input.target.checked);
     };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'annotations.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // Clear all annotations
-  const clearAnnotations = () => {
-    setBoxes([]);
-    setHighlights([]);
-    setActiveBox(null);
-    setActiveHighlight(null);
   };
 
   return (
-    <div className="flex flex-col items-center justify-items-center min-h-screen p-8 gap-16">
-      <div>toolbar</div>
-      <div className="flex">
+    <div className="flex flex-col items-center justify-items-center w-full min-h-screen gap-4">
+      <Navbar className="!sticky top-0 z-50">
+        <Navbar.Group align="left">
+          <Navbar.Heading>Image Annotation Tool</Navbar.Heading>
+        </Navbar.Group>
+        <Navbar.Group align="right">
+          <Switch id="auto-link" label="Auto-link annotations" checked={autoLink} onChange={toggle(setAutoLink)} />
+          <Switch id="edit-mode" label="Edit text" checked={isEditMode} onChange={toggle(setIsEditMode)} />
+          <Button icon="download" onClick={exportAnnotations} className="hover:bg-accent">
+            Export
+          </Button>
+          <Button
+            icon="delete"
+            onClick={clearAnnotations}
+            className="hover:bg-destructive hover:text-destructive-foreground"
+          >
+            Clear All
+          </Button>
+        </Navbar.Group>
+      </Navbar>
+
+      <div className="flex p-8 gap-4">
         <ImageAnnotator
           boxes={boxes}
           setBoxes={setBoxes}
