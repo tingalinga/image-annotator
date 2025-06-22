@@ -27,7 +27,7 @@ export default function Annotator() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-items-center w-full min-h-screen gap-4">
+    <div className="flex flex-col items-center justify-items-center w-full min-h-screen">
       <Navbar className="!sticky top-0 z-50">
         <Navbar.Group align="left">
           <Navbar.Heading>Image Annotation Tool</Navbar.Heading>
@@ -47,7 +47,7 @@ export default function Annotator() {
         </Navbar.Group>
       </Navbar>
 
-      <div className="flex p-8 gap-4">
+      <div className="flex p-2 gap-2">
         <ImageAnnotator />
         <TextAnnotator />
       </div>
