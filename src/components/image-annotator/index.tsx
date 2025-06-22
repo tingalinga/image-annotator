@@ -5,24 +5,11 @@ import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { BoundingBox } from '@/typings';
 import { Button, Icon } from '@blueprintjs/core';
+import { useAnnotation } from '@/hooks/use-annotation';
 
-interface ImageAnnotatorProps {
-  boxes: BoundingBox[];
-  setBoxes: React.Dispatch<React.SetStateAction<BoundingBox[]>>;
-  activeBox: string | null;
-  setActiveBox: (id: string | null) => void;
-  isDrawing: boolean;
-  setIsDrawing: React.Dispatch<React.SetStateAction<boolean>>;
-}
+export default function ImageAnnotator() {
+  const { boxes, setBoxes, activeBox, handleBoxSelect, isDrawing, setIsDrawing } = useAnnotation();
 
-export default function ImageAnnotator({
-  boxes,
-  setBoxes,
-  activeBox,
-  setActiveBox,
-  isDrawing,
-  setIsDrawing,
-}: ImageAnnotatorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -143,7 +130,7 @@ export default function ImageAnnotator({
       };
 
       setBoxes([...boxes, newBox]);
-      setActiveBox(newBox.id);
+      handleBoxSelect(newBox.id);
     }
 
     setIsDrawing(false);
@@ -164,13 +151,13 @@ export default function ImageAnnotator({
     for (let i = boxes.length - 1; i >= 0; i--) {
       const box = boxes[i];
       if (x >= box.x && x <= box.x + box.width && y >= box.y && y <= box.y + box.height) {
-        setActiveBox(box.id);
+        handleBoxSelect(box.id);
         return;
       }
     }
 
     // If we didn't click on a box, deselect
-    setActiveBox(null);
+    handleBoxSelect(null);
   };
 
   // Handle file upload
@@ -203,7 +190,7 @@ export default function ImageAnnotator({
     if (!activeBox) return;
 
     setBoxes(boxes.filter(box => box.id !== activeBox));
-    setActiveBox(null);
+    handleBoxSelect(null);
   };
 
   return (

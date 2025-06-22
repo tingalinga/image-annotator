@@ -4,38 +4,14 @@ import { TextHighlight } from '@/typings';
 import { Button } from '@blueprintjs/core';
 import type React from 'react';
 import { useRef, useState, useEffect } from 'react';
+import { useAnnotation } from '@/hooks/use-annotation';
 
-interface TextAnnotatorProps {
-  text: string;
-  highlights: TextHighlight[];
-  setHighlights: React.Dispatch<React.SetStateAction<TextHighlight[]>>;
-  activeHighlight: string | null;
-  setActiveHighlight: (id: string | null) => void;
-  isEditMode: boolean;
-  onTextChange: (text: string) => void;
-}
+export default function TextAnnotator() {
+  const { highlights, setHighlights, activeHighlight, handleHighlightSelect, editableText } = useAnnotation();
 
-export default function TextAnnotator({
-  text,
-  highlights,
-  setHighlights,
-  activeHighlight,
-  setActiveHighlight,
-  isEditMode,
-  onTextChange,
-}: TextAnnotatorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isExtendingHighlight, setIsExtendingHighlight] = useState(false);
   const [isReducingHighlight, setIsReducingHighlight] = useState(false);
-
-  const handleTextChange = (newText: string) => {
-    onTextChange(newText);
-    // Clear highlights when text is changed to avoid misaligned highlights
-    if (newText !== text) {
-      setHighlights([]);
-      setActiveHighlight(null);
-    }
-  };
 
   // Handle text selection for creating new highlights
   const handleTextSelection = () => {
@@ -75,7 +51,7 @@ export default function TextAnnotator({
                   ...h,
                   start: newStart,
                   end: newEnd,
-                  text: text.substring(newStart, newEnd),
+                  text: editableText.substring(newStart, newEnd),
                 }
               : h
           )
@@ -96,7 +72,7 @@ export default function TextAnnotator({
                   ? {
                       ...h,
                       start: end,
-                      text: text.substring(end, h.end),
+                      text: editableText.substring(end, h.end),
                     }
                   : h
               )
@@ -110,7 +86,7 @@ export default function TextAnnotator({
                   ? {
                       ...h,
                       end: start,
-                      text: text.substring(h.start, start),
+                      text: editableText.substring(h.start, start),
                     }
                   : h
               )
@@ -132,7 +108,7 @@ export default function TextAnnotator({
       };
 
       setHighlights([...highlights, newHighlight]);
-      setActiveHighlight(newHighlight.id);
+      handleHighlightSelect(newHighlight.id);
     }
 
     // Clear the selection
@@ -169,12 +145,12 @@ export default function TextAnnotator({
     if (!activeHighlight) return;
 
     setHighlights(highlights.filter(highlight => highlight.id !== activeHighlight));
-    setActiveHighlight(null);
+    handleHighlightSelect(null);
   };
 
   // Render the text with highlights
   const renderHighlightedText = () => {
-    if (!text) return null;
+    if (!editableText) return null;
 
     // Create an array of "markup points" - points where highlighting starts or ends
     const markupPoints: {
@@ -228,7 +204,7 @@ export default function TextAnnotator({
 
       // Add text segment before this point
       if (point.position > lastPosition) {
-        const segment = text.substring(lastPosition, point.position);
+        const segment = editableText.substring(lastPosition, point.position);
 
         if (activeHighlights.length === 0) {
           result.push(<span key={`text-${lastPosition}`}>{segment}</span>);
@@ -260,7 +236,7 @@ export default function TextAnnotator({
               className="hover:shadow-sm"
               onClick={() => {
                 const topHighlight = sortedHighlights[sortedHighlights.length - 1];
-                setActiveHighlight(topHighlight.id);
+                handleHighlightSelect(topHighlight.id);
               }}
             >
               {segment}
@@ -305,8 +281,8 @@ export default function TextAnnotator({
     }
 
     // Add any remaining text
-    if (lastPosition < text.length) {
-      result.push(<span key={`text-${lastPosition}`}>{text.substring(lastPosition)}</span>);
+    if (lastPosition < editableText.length) {
+      result.push(<span key={`text-${lastPosition}`}>{editableText.substring(lastPosition)}</span>);
     }
 
     return result;
@@ -316,72 +292,59 @@ export default function TextAnnotator({
     <div className="flex-1 flex flex-col h-full space-y-4">
       {/* Text Content Area */}
       <div className="flex-1 min-h-[400px] border rounded-lg bg-muted/20 overflow-hidden">
-        {isEditMode ? (
-          <textarea
-            value={text}
-            onChange={e => handleTextChange(e.target.value)}
-            className="w-full h-full p-4 text-base bg-transparent border-none resize-none focus:outline-none leading-relaxed"
-            placeholder="Enter your text here to annotate..."
-          />
-        ) : (
-          <div
-            ref={containerRef}
-            className="p-4 text-base leading-relaxed h-full overflow-auto"
-            onMouseUp={handleTextSelection}
-          >
-            {text ? (
-              renderHighlightedText()
-            ) : (
-              <div className="text-muted-foreground italic">Select text to highlight and link to bounding boxes</div>
-            )}
-          </div>
-        )}
+        <div
+          ref={containerRef}
+          className="p-4 text-base leading-relaxed h-full overflow-auto"
+          onMouseUp={handleTextSelection}
+        >
+          {editableText ? (
+            renderHighlightedText()
+          ) : (
+            <div className="text-muted-foreground italic">Select text to highlight and link to bounding boxes</div>
+          )}
+        </div>
       </div>
 
       {/* Controls */}
       <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
         <div className="text-sm text-muted-foreground font-medium">
-          {isEditMode
-            ? `${text.length} characters`
-            : `${highlights.length} highlight${highlights.length !== 1 ? 's' : ''}`}
+          {highlights.length} highlight{highlights.length !== 1 ? 's' : ''}
         </div>
 
-        {!isEditMode && (
-          <div className="flex items-center gap-3">
-            {activeHighlight && (
-              <>
-                <Button
-                  icon="plus"
-                  onClick={() => {
-                    setIsExtendingHighlight(!isExtendingHighlight);
-                    setIsReducingHighlight(false);
-                  }}
-                  className="hover:shadow-sm transition-all"
-                >
-                  Extend
-                </Button>
-                <Button
-                  icon="minus"
-                  onClick={() => {
-                    setIsReducingHighlight(!isReducingHighlight);
-                    setIsExtendingHighlight(false);
-                  }}
-                  className="hover:shadow-sm transition-all"
-                >
-                  Reduce
-                </Button>
-              </>
-            )}
-            <Button
-              icon="delete"
-              onClick={deleteActiveHighlight}
-              disabled={!activeHighlight}
-              className="hover:shadow-sm transition-all"
-            >
-              Delete
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {activeHighlight && (
+            <>
+              <Button
+                icon="plus"
+                onClick={() => {
+                  setIsExtendingHighlight(!isExtendingHighlight);
+                  setIsReducingHighlight(false);
+                }}
+                className="hover:shadow-sm transition-all"
+              >
+                Extend
+              </Button>
+              <Button
+                icon="minus"
+                onClick={() => {
+                  setIsReducingHighlight(!isReducingHighlight);
+                  setIsExtendingHighlight(false);
+                }}
+                className="hover:shadow-sm transition-all"
+              >
+                Reduce
+              </Button>
+            </>
+          )}
+          <Button
+            icon="delete"
+            onClick={deleteActiveHighlight}
+            disabled={!activeHighlight}
+            className="hover:shadow-sm transition-all"
+          >
+            Delete
+          </Button>
+        </div>
       </div>
     </div>
   );

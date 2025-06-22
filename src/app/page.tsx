@@ -9,19 +9,11 @@ import { ChangeEvent } from 'react';
 export default function Annotator() {
   const {
     boxes,
-    setBoxes,
     highlights,
-    setHighlights,
     activeBox,
     activeHighlight,
-    isDrawing,
-    setIsDrawing,
     autoLink,
     setAutoLink,
-    isEditMode,
-    setIsEditMode,
-    editableText,
-    setEditableText,
     handleBoxSelect,
     handleHighlightSelect,
     clearAnnotations,
@@ -42,7 +34,6 @@ export default function Annotator() {
         </Navbar.Group>
         <Navbar.Group align="right">
           <Switch id="auto-link" label="Auto-link annotations" checked={autoLink} onChange={toggle(setAutoLink)} />
-          <Switch id="edit-mode" label="Edit text" checked={isEditMode} onChange={toggle(setIsEditMode)} />
           <Button icon="download" onClick={exportAnnotations} className="hover:bg-accent">
             Export
           </Button>
@@ -57,25 +48,10 @@ export default function Annotator() {
       </Navbar>
 
       <div className="flex p-8 gap-4">
-        <ImageAnnotator
-          boxes={boxes}
-          setBoxes={setBoxes}
-          activeBox={activeBox}
-          setActiveBox={handleBoxSelect}
-          isDrawing={isDrawing}
-          setIsDrawing={setIsDrawing}
-        />
-        <TextAnnotator
-          text={editableText}
-          highlights={highlights}
-          setHighlights={setHighlights}
-          activeHighlight={activeHighlight}
-          setActiveHighlight={handleHighlightSelect}
-          isEditMode={isEditMode}
-          onTextChange={setEditableText}
-        />
+        <ImageAnnotator />
+        <TextAnnotator />
       </div>
-      {/* Linked Annotations Section */}
+
       <Card>
         <H3>Linked Annotations</H3>
         <Text className="text-sm text-muted-foreground">
