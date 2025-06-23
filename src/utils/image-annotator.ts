@@ -17,14 +17,7 @@ const BOX_COLORS = [
   '#5A701A',
   '#866103',
   '#946638',
-
-  '#FF5733',
-  '#33FF57',
   '#3357FF',
-  '#FF33F5',
-  '#33FFF5',
-  '#FF3333',
-  '#33FF33',
 ];
 
 // Cursor mapping for resize handles
