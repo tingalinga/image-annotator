@@ -107,14 +107,7 @@ export default function ImageAnnotator() {
         <div className="flex items-center gap-4">
           {/* TODO: Remove and add to context menu + hotkey */}
           <Tooltip content="Delete box">
-            <Button
-              icon="delete-clip"
-              variant="minimal"
-              size="small"
-              onClick={deleteActiveBox}
-              disabled={!activeBox}
-              className="hover:shadow-sm transition-all"
-            />
+            <Button icon="delete-clip" variant="minimal" size="small" onClick={deleteActiveBox} disabled={!activeBox} />
           </Tooltip>
           <div className="flex items-center gap-2">
             <Button icon="minus" variant="minimal" size="small" onClick={() => setScale(scale - 0.1)} />

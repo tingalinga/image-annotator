@@ -44,10 +44,17 @@ export default function TextAnnotationList() {
               key={highlight.id}
               className="block p-3 text-highlight"
               style={activeHighlight === highlight.id ? { borderColor: highlight.color } : undefined}
-              onClick={() => handleHighlightSelect(highlight.id)}
+              onClick={() => {
+                if (activeHighlight === highlight.id) {
+                  handleHighlightSelect(null);
+                  handleBoxSelect(null);
+                } else {
+                  handleHighlightSelect(highlight.id);
+                }
+              }}
             >
               <div className="flex items-center justify-between">
-                <Text ellipsize className="max-w-[200px]">
+                <Text ellipsize className="max-w-[450px]">
                   &ldquo;{highlight.text}&rdquo;
                 </Text>
                 <div className="flex items-center gap-2">

@@ -46,7 +46,14 @@ export default function BoundingBoxList() {
               key={box.id}
               className="block p-3 bounding-box"
               style={activeBox === box.id ? { borderColor: box.color } : undefined}
-              onClick={() => handleBoxSelect(box.id)}
+              onClick={() => {
+                if (activeBox === box.id) {
+                  handleBoxSelect(null);
+                  handleHighlightSelect(null);
+                } else {
+                  handleBoxSelect(box.id);
+                }
+              }}
             >
               <div className="flex items-center justify-between">
                 <Text>Box #{box.id.slice(0, 8)}</Text>

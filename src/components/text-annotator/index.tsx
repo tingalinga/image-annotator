@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Card, Divider, Tag, Text, Tooltip } from '@blueprintjs/core';
+import { Button, Card, Divider, Tag, Text, TextArea, Tooltip } from '@blueprintjs/core';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -21,12 +21,84 @@ export default function TextAnnotator() {
     handleHighlightSelect,
     handleBoxSelect,
     editableText,
+    setEditableText,
     deleteHighlight,
+    isEditMode,
+    setIsEditMode,
   } = useAnnotation();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [isExtendingHighlight, setIsExtendingHighlight] = useState(false);
   const [isReducingHighlight, setIsReducingHighlight] = useState(false);
+
+  const toggleIsEditMode = () => {
+    setIsEditMode(!isEditMode);
+  };
+
+  // Helper to find the diff between old and new text (single edit)
+  function findTextDiff(oldText: string, newText: string) {
+    let start = 0;
+    while (start < oldText.length && start < newText.length && oldText[start] === newText[start]) {
+      start++;
+    }
+    let endOld = oldText.length - 1;
+    let endNew = newText.length - 1;
+    while (endOld >= start && endNew >= start && oldText[endOld] === newText[endNew]) {
+      endOld--;
+      endNew--;
+    }
+    return {
+      index: start,
+      removed: oldText.slice(start, endOld + 1),
+      added: newText.slice(start, endNew + 1),
+    };
+  }
+
+  const prevTextRef = useRef(editableText);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    const oldText = prevTextRef.current;
+
+    // Find the diff (insertion/deletion, position, length)
+    const diff = findTextDiff(oldText, newText);
+
+    let newHighlights = highlights.map(h => ({ ...h }));
+    if (diff) {
+      const { index, removed, added } = diff;
+      const delta = added.length - removed.length;
+      newHighlights = newHighlights
+        .map(h => {
+          // Edit before highlight: shift
+          if (index <= h.start) {
+            return {
+              ...h,
+              start: h.start + delta,
+              end: h.end + delta,
+              text: newText.slice(h.start + delta, h.end + delta),
+            };
+          }
+          // Edit inside highlight
+          if (index > h.start && index <= h.end) {
+            return {
+              ...h,
+              end: h.end + delta,
+              text: newText.slice(h.start, h.end + delta),
+            };
+          }
+          // Edit after highlight: no change
+          return {
+            ...h,
+            text: newText.slice(h.start, h.end),
+          };
+        })
+        .filter(h => h.end > h.start && h.start >= 0 && h.end <= newText.length);
+    }
+
+    setEditableText(newText);
+    setHighlights(newHighlights);
+    prevTextRef.current = newText;
+  };
 
   // Handle text selection for creating new highlights
   const handleTextSelection = () => {
@@ -130,12 +202,6 @@ export default function TextAnnotator() {
     selection.removeAllRanges();
   };
 
-  // Reset modification modes when active highlight changes
-  useEffect(() => {
-    setIsExtendingHighlight(false);
-    setIsReducingHighlight(false);
-  }, [activeHighlight]);
-
   // Delete the active highlight
   const deleteActiveHighlight = () => {
     if (activeHighlight) deleteHighlight(activeHighlight);
@@ -181,7 +247,7 @@ export default function TextAnnotator() {
                 style={{
                   position: 'absolute',
                   top: '-18px',
-                  right: '0',
+                  left: '0',
                   fontSize: '10px',
                   backgroundColor: active.color,
                   color: '#fff',
@@ -226,6 +292,7 @@ export default function TextAnnotator() {
     const result = [];
     let lastPosition = 0;
     const openHighlights = [];
+    const renderedLinkedTag = new Set<string>();
     for (let i = 0; i < markupPoints.length; i++) {
       const point = markupPoints[i];
       if (point.position > lastPosition) {
@@ -235,6 +302,7 @@ export default function TextAnnotator() {
         } else {
           // Use the topmost highlight for color
           const top = openHighlights[openHighlights.length - 1];
+          const showLinkedTag = top.hasLink && !renderedLinkedTag.has(top.highlightId);
           result.push(
             <span
               key={`text-${lastPosition}`}
@@ -250,12 +318,12 @@ export default function TextAnnotator() {
               onClick={() => handleHighlightSelect(top.highlightId)}
             >
               {segment}
-              {top.hasLink && (
+              {showLinkedTag && (
                 <span
                   style={{
                     position: 'absolute',
                     top: '-18px',
-                    right: '0',
+                    left: '0',
                     fontSize: '10px',
                     backgroundColor: top.color,
                     color: '#fff',
@@ -268,6 +336,9 @@ export default function TextAnnotator() {
               )}
             </span>
           );
+          if (showLinkedTag) {
+            renderedLinkedTag.add(top.highlightId);
+          }
         }
       }
       if (point.isStart) {
@@ -283,6 +354,12 @@ export default function TextAnnotator() {
     }
     return result;
   };
+
+  // Reset modification modes when active highlight changes
+  useEffect(() => {
+    setIsExtendingHighlight(false);
+    setIsReducingHighlight(false);
+  }, [activeHighlight]);
 
   return (
     <Card className="flex-1 flex flex-col h-full !p-0 overflow-hidden">
@@ -308,7 +385,6 @@ export default function TextAnnotator() {
                   setIsExtendingHighlight(false);
                 }}
                 active={isReducingHighlight}
-                className="hover:shadow-sm transition-all"
               >
                 Reduce
               </Button>
@@ -320,21 +396,22 @@ export default function TextAnnotator() {
                   setIsReducingHighlight(false);
                 }}
                 active={isExtendingHighlight}
-                className="hover:shadow-sm transition-all"
               >
                 Extend
               </Button>
             </>
           )}
-          <Tooltip content="Delete box">
+          <Tooltip content="Delete annotation">
             <Button
               icon="key-delete"
               variant="minimal"
               size="small"
               onClick={deleteActiveHighlight}
               disabled={!activeHighlight}
-              className="hover:shadow-sm transition-all"
             />
+          </Tooltip>
+          <Tooltip content={isEditMode ? 'Confirm' : 'Edit'}>
+            <Button icon={isEditMode ? 'tick' : 'edit'} variant="minimal" size="small" onClick={toggleIsEditMode} />
           </Tooltip>
         </div>
       </div>
@@ -348,7 +425,9 @@ export default function TextAnnotator() {
           className="flex-1 grow px-2 py-4 h-full leading-relaxed  m-px bg-[#1c2127] overflow-auto"
           onMouseUp={handleTextSelection}
         >
-          {editableText ? (
+          {isEditMode ? (
+            <TextArea className="min-h-[200px] w-full" fill value={editableText} onChange={handleTextChange} />
+          ) : editableText ? (
             renderHighlightedText()
           ) : (
             <div className="text-muted-foreground italic">Select text to highlight and link to bounding boxes</div>

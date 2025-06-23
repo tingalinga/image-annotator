@@ -6,7 +6,26 @@ export const MIN_BOX_SIZE = 10;
 export const MIN_DRAW_SIZE = 5;
 
 // Color palette for bounding boxes
-const BOX_COLORS = ['#FF5733', '#33FF57', '#3357FF', '#FF33F5', '#33FFF5', '#F5FF33', '#FF3333', '#33FF33'];
+const BOX_COLORS = [
+  '#D33D17',
+  '#DB2C6F',
+  '#9D3F9D',
+  '#7961DB',
+  '#147EB3',
+  '#007067',
+  '#238C2C',
+  '#5A701A',
+  '#866103',
+  '#946638',
+
+  '#FF5733',
+  '#33FF57',
+  '#3357FF',
+  '#FF33F5',
+  '#33FFF5',
+  '#FF3333',
+  '#33FF33',
+];
 
 // Cursor mapping for resize handles
 export const RESIZE_CURSORS: Record<string, string> = {
