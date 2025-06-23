@@ -20,6 +20,7 @@ export default function TextAnnotator() {
   const {
     highlights,
     setHighlights,
+    setBoxes,
     activeHighlight,
     handleHighlightSelect,
     handleBoxSelect,
@@ -44,6 +45,17 @@ export default function TextAnnotator() {
     const newText = e.target.value;
     const oldText = prevTextRef.current;
     const newHighlights = updateHighlightsOnTextChange(oldText, newText, highlights);
+
+    // Find removed highlights
+    const removedHighlightIds = highlights.filter(h => !newHighlights.some(nh => nh.id === h.id)).map(h => h.id);
+
+    // Unlink boxes whose textRef matches a removed highlight
+    if (removedHighlightIds.length > 0) {
+      setBoxes(boxes =>
+        boxes.map(box => (removedHighlightIds.includes(box.textRef ?? '') ? { ...box, textRef: null } : box))
+      );
+    }
+
     setEditableText(newText);
     setHighlights(newHighlights);
     prevTextRef.current = newText;
@@ -340,7 +352,7 @@ export default function TextAnnotator() {
       <div className="flex flex-col min-h-[400px]">
         <div
           ref={containerRef}
-          className="flex-1 grow px-2 py-4 h-full leading-loose m-px bg-[#1c2127] overflow-auto"
+          className="flex-1 grow p-4 h-full leading-loose m-px bg-[#1c2127] overflow-auto"
           onMouseUp={handleTextSelection}
         >
           {isEditMode ? (
@@ -348,7 +360,7 @@ export default function TextAnnotator() {
           ) : editableText ? (
             highlightedTextMarkup
           ) : (
-            <div className="text-muted-foreground italic">Select text to highlight and link to bounding boxes</div>
+            <Text className="bp5-text-muted select-none">Select text to highlight and link to bounding boxes</Text>
           )}
         </div>
       </div>
