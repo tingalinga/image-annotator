@@ -1,5 +1,9 @@
 # Image Annotator
 
+## Live Demo
+
+Try the app online: [https://image-annotator-murex.vercel.app/](https://image-annotator-murex.vercel.app/)
+
 A web-based annotation tool built with Next.js for annotating images and text. Supports bounding box creation, text highlights, and linking between them. Designed for usability and extensibility.
 
 ## Features
