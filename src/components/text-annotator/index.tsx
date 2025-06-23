@@ -2,10 +2,11 @@
 
 import { Button, Card, Divider, Tag, Text, Tooltip } from '@blueprintjs/core';
 import type React from 'react';
-import { useEffect,useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useAnnotation } from '@/hooks/use-annotation';
 import { TextHighlight } from '@/typings';
+import { getRandomColor } from '@/utils/image-annotator';
 
 /**
  * TODO: Support editing highlight by dragging instead of clicking reduce and extend buttons
@@ -13,7 +14,15 @@ import { TextHighlight } from '@/typings';
  * TODO: Fix renderHighlightedText logic
  */
 export default function TextAnnotator() {
-  const { highlights, setHighlights, activeHighlight, handleHighlightSelect, editableText } = useAnnotation();
+  const {
+    highlights,
+    setHighlights,
+    activeHighlight,
+    handleHighlightSelect,
+    handleBoxSelect,
+    editableText,
+    deleteHighlight,
+  } = useAnnotation();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [isExtendingHighlight, setIsExtendingHighlight] = useState(false);
@@ -127,31 +136,9 @@ export default function TextAnnotator() {
     setIsReducingHighlight(false);
   }, [activeHighlight]);
 
-  // Generate a random color for the highlight
-  const getRandomColor = () => {
-    const colors = [
-      '#FF5733', // Orange-red
-      '#33FF57', // Bright green
-      '#3357FF', // Blue
-      '#FF33F5', // Pink
-      '#33FFF5', // Cyan
-      '#F5FF33', // Yellow
-      '#FF3333', // Red
-      '#33FF33', // Green
-      '#9933FF', // Purple
-      '#FF9933', // Orange
-      '#33FFAA', // Mint
-      '#AA33FF', // Violet
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  };
-
   // Delete the active highlight
   const deleteActiveHighlight = () => {
-    if (!activeHighlight) return;
-
-    setHighlights(highlights.filter(highlight => highlight.id !== activeHighlight));
-    handleHighlightSelect(null);
+    if (activeHighlight) deleteHighlight(activeHighlight);
   };
 
   // Render the text with highlights
@@ -172,14 +159,21 @@ export default function TextAnnotator() {
             style={{
               backgroundColor: `${active.color}40`,
               border: `2px solid ${active.color}`,
-              padding: '2px 4px',
               borderRadius: '4px',
+              padding: '2px 4px',
               cursor: 'pointer',
               position: 'relative',
               transition: 'all 0.2s ease',
             }}
             className="hover:shadow-sm"
-            onClick={() => handleHighlightSelect(active.id)}
+            onClick={() => {
+              if (active.id) {
+                handleHighlightSelect(null);
+                handleBoxSelect(null);
+              } else {
+                handleHighlightSelect(active.id);
+              }
+            }}
           >
             {highlighted}
             {active.boxRef && (
@@ -192,7 +186,6 @@ export default function TextAnnotator() {
                   backgroundColor: active.color,
                   color: '#fff',
                   padding: '2px 6px',
-                  borderRadius: '4px',
                   fontWeight: '500',
                 }}
               >
@@ -248,8 +241,7 @@ export default function TextAnnotator() {
               style={{
                 backgroundColor: `${top.color}40`,
                 border: 'none',
-                padding: '2px 4px',
-                borderRadius: '4px',
+                padding: '2px 0',
                 cursor: 'pointer',
                 position: 'relative',
                 transition: 'all 0.2s ease',
@@ -268,7 +260,6 @@ export default function TextAnnotator() {
                     backgroundColor: top.color,
                     color: '#fff',
                     padding: '2px 6px',
-                    borderRadius: '4px',
                     fontWeight: '500',
                   }}
                 >
@@ -354,7 +345,7 @@ export default function TextAnnotator() {
       <div className="flex flex-col min-h-[400px]">
         <div
           ref={containerRef}
-          className="flex-1 grow p-2 h-full leading-relaxed  m-px bg-[#1c2127] overflow-auto"
+          className="flex-1 grow px-2 py-4 h-full leading-relaxed  m-px bg-[#1c2127] overflow-auto"
           onMouseUp={handleTextSelection}
         >
           {editableText ? (

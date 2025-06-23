@@ -3,7 +3,7 @@
 import { Button, Card, Divider, FileInput, NonIdealState, Slider, Text, Tooltip } from '@blueprintjs/core';
 import classNames from 'classnames';
 import type React from 'react';
-import { useEffect,useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useAnnotation } from '@/hooks/use-annotation';
 import { useImageLoader } from '@/hooks/use-image-loader';
