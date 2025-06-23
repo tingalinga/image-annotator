@@ -222,16 +222,11 @@ export default function TextAnnotator() {
           before && <span key="before">{before}</span>,
           <span
             key="active-highlight"
+            className="active-highlight"
             style={{
               backgroundColor: `${active.color}40`,
               border: `2px solid ${active.color}`,
-              borderRadius: '4px',
-              padding: '2px 4px',
-              cursor: 'pointer',
-              position: 'relative',
-              transition: 'all 0.2s ease',
             }}
-            className="hover:shadow-sm"
             onClick={() => {
               if (active.id) {
                 handleHighlightSelect(null);
@@ -243,18 +238,7 @@ export default function TextAnnotator() {
           >
             {highlighted}
             {active.boxRef && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-18px',
-                  left: '0',
-                  fontSize: '10px',
-                  backgroundColor: active.color,
-                  color: '#fff',
-                  padding: '2px 6px',
-                  fontWeight: '500',
-                }}
-              >
+              <span className="linked-tag" style={{ backgroundColor: active.color }}>
                 Linked
               </span>
             )}
@@ -306,31 +290,13 @@ export default function TextAnnotator() {
           result.push(
             <span
               key={`text-${lastPosition}`}
-              style={{
-                backgroundColor: `${top.color}40`,
-                border: 'none',
-                padding: '2px 0',
-                cursor: 'pointer',
-                position: 'relative',
-                transition: 'all 0.2s ease',
-              }}
-              className="hover:shadow-sm"
+              className="highlight"
+              style={{ backgroundColor: `${top.color}40` }}
               onClick={() => handleHighlightSelect(top.highlightId)}
             >
               {segment}
               {showLinkedTag && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '-18px',
-                    left: '0',
-                    fontSize: '10px',
-                    backgroundColor: top.color,
-                    color: '#fff',
-                    padding: '2px 6px',
-                    fontWeight: '500',
-                  }}
-                >
+                <span className="linked-tag" style={{ backgroundColor: top.color }}>
                   Linked
                 </span>
               )}
@@ -422,7 +388,7 @@ export default function TextAnnotator() {
       <div className="flex flex-col min-h-[400px]">
         <div
           ref={containerRef}
-          className="flex-1 grow px-2 py-4 h-full leading-relaxed  m-px bg-[#1c2127] overflow-auto"
+          className="flex-1 grow px-2 py-4 h-full leading-loose m-px bg-[#1c2127] overflow-auto"
           onMouseUp={handleTextSelection}
         >
           {isEditMode ? (
