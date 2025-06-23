@@ -1,5 +1,7 @@
 'use client';
 
+import './index.css';
+
 import { Button, Card, Divider, Tag, Text, TextArea, Tooltip } from '@blueprintjs/core';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -7,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAnnotation } from '@/hooks/use-annotation';
 import { TextHighlight } from '@/typings';
 import { getRandomColor } from '@/utils/image-annotator';
+import { updateHighlightsOnTextChange } from '@/utils/text-highlights';
 
 /**
  * TODO: Support editing highlight by dragging instead of clicking reduce and extend buttons
@@ -35,66 +38,12 @@ export default function TextAnnotator() {
     setIsEditMode(!isEditMode);
   };
 
-  // Helper to find the diff between old and new text (single edit)
-  function findTextDiff(oldText: string, newText: string) {
-    let start = 0;
-    while (start < oldText.length && start < newText.length && oldText[start] === newText[start]) {
-      start++;
-    }
-    let endOld = oldText.length - 1;
-    let endNew = newText.length - 1;
-    while (endOld >= start && endNew >= start && oldText[endOld] === newText[endNew]) {
-      endOld--;
-      endNew--;
-    }
-    return {
-      index: start,
-      removed: oldText.slice(start, endOld + 1),
-      added: newText.slice(start, endNew + 1),
-    };
-  }
-
   const prevTextRef = useRef(editableText);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     const oldText = prevTextRef.current;
-
-    // Find the diff (insertion/deletion, position, length)
-    const diff = findTextDiff(oldText, newText);
-
-    let newHighlights = highlights.map(h => ({ ...h }));
-    if (diff) {
-      const { index, removed, added } = diff;
-      const delta = added.length - removed.length;
-      newHighlights = newHighlights
-        .map(h => {
-          // Edit before highlight: shift
-          if (index <= h.start) {
-            return {
-              ...h,
-              start: h.start + delta,
-              end: h.end + delta,
-              text: newText.slice(h.start + delta, h.end + delta),
-            };
-          }
-          // Edit inside highlight
-          if (index > h.start && index <= h.end) {
-            return {
-              ...h,
-              end: h.end + delta,
-              text: newText.slice(h.start, h.end + delta),
-            };
-          }
-          // Edit after highlight: no change
-          return {
-            ...h,
-            text: newText.slice(h.start, h.end),
-          };
-        })
-        .filter(h => h.end > h.start && h.start >= 0 && h.end <= newText.length);
-    }
-
+    const newHighlights = updateHighlightsOnTextChange(oldText, newText, highlights);
     setEditableText(newText);
     setHighlights(newHighlights);
     prevTextRef.current = newText;
@@ -327,6 +276,9 @@ export default function TextAnnotator() {
     setIsReducingHighlight(false);
   }, [activeHighlight]);
 
+  // Precompute highlighted text markup before return
+  const highlightedTextMarkup = renderHighlightedText();
+
   return (
     <Card className="flex-1 flex flex-col h-full !p-0 overflow-hidden">
       <div className="flex px-2 py-1 justify-between items-center">
@@ -394,7 +346,7 @@ export default function TextAnnotator() {
           {isEditMode ? (
             <TextArea className="min-h-[200px] w-full" fill value={editableText} onChange={handleTextChange} />
           ) : editableText ? (
-            renderHighlightedText()
+            highlightedTextMarkup
           ) : (
             <div className="text-muted-foreground italic">Select text to highlight and link to bounding boxes</div>
           )}

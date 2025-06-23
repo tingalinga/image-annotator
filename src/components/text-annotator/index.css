@@ -6,6 +6,14 @@
   transition: all 0.2s ease;
 }
 
+.active-highlight {
+  border-radius: 4px;
+  padding: 2px 4px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
 .linked-tag {
   position: absolute;
   top: -1.8em;
@@ -13,17 +21,9 @@
   font-size: 10px;
   background-color: #000;
   color: #fff;
-  padding: 2px 6px;
+  padding: 0px 4px;
   border-radius: 4px;
   font-weight: 500;
   white-space: nowrap;
   z-index: 2;
-}
-
-.active-highlight {
-  border-radius: 4px;
-  padding: 2px 4px;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
 }
