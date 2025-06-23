@@ -28,6 +28,7 @@ interface AnnotationState {
   handleHighlightSelect: (highlightId: string | null) => void;
   clearAnnotations: () => void;
   exportAnnotations: () => void;
+  unlinkAnnotations: (boxId: string, highlightId: string) => void;
 }
 
 export const useAnnotationStore = create<AnnotationState>((set, get) => {
@@ -211,6 +212,17 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => {
       } catch (error) {
         console.error('Failed to export annotations:', error);
       }
+    },
+
+    unlinkAnnotations: (boxId: string, highlightId: string) => {
+      const { boxes, highlights } = get();
+      // Only unlink the specified box and highlight
+      set({
+        boxes: boxes.map(box => (box.id === boxId && box.textRef === highlightId ? { ...box, textRef: null } : box)),
+        highlights: highlights.map(highlight =>
+          highlight.id === highlightId && highlight.boxRef === boxId ? { ...highlight, boxRef: null } : highlight
+        ),
+      });
     },
   };
 });

@@ -1,10 +1,23 @@
 import { useAnnotation } from '@/hooks/use-annotation';
-import { Card, Divider, NonIdealState, NonIdealStateIconSize, Tag, Text } from '@blueprintjs/core';
-
+import { Button, Card, Divider, NonIdealState, NonIdealStateIconSize, Tag, Text, Tooltip } from '@blueprintjs/core';
 import './index.css';
+import { BoundingBox } from '@/typings';
+import { isNull } from 'lodash-es';
 
+/**
+ * TODO: fix tooltip position for link/unlink button
+ */
 export default function BoundingBoxList() {
-  const { boxes, activeBox, handleBoxSelect } = useAnnotation();
+  const { boxes, activeBox, handleBoxSelect, handleHighlightSelect, unlinkAnnotations } = useAnnotation();
+
+  // Handler for the link/unlink button
+  const handleLinkButtonClick = (box: BoundingBox) => {
+    if (box.textRef) {
+      // Unlink if already linked
+      unlinkAnnotations(box.id, box.textRef);
+      handleHighlightSelect(null);
+    }
+  };
 
   return (
     <Card className="flex-1 flex flex-col h-full !p-px">
@@ -35,7 +48,18 @@ export default function BoundingBoxList() {
             >
               <div className="flex items-center justify-between">
                 <Text>Box #{box.id.slice(0, 8)}</Text>
-                <Tag color={box.color}>{box.textRef ? 'Linked' : 'Unlinked'}</Tag>
+                <Tooltip content={box.textRef ? 'Unlink annotation' : 'Link annotation'}>
+                  <Button
+                    icon={box.textRef ? 'link' : 'unlink'}
+                    variant="minimal"
+                    size="small"
+                    disabled={isNull(box.textRef)}
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleLinkButtonClick(box);
+                    }}
+                  />
+                </Tooltip>
               </div>
             </span>
           ))

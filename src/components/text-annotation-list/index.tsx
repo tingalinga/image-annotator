@@ -1,10 +1,21 @@
 import { useAnnotation } from '@/hooks/use-annotation';
-import { Card, Divider, NonIdealState, NonIdealStateIconSize, Tag, Text } from '@blueprintjs/core';
+import { Button, Card, Divider, NonIdealState, NonIdealStateIconSize, Tag, Text, Tooltip } from '@blueprintjs/core';
 
 import './index.css';
+import { TextHighlight } from '@/typings';
+import { isNull } from 'lodash-es';
 
 export default function TextAnnotationList() {
-  const { highlights, activeHighlight, handleHighlightSelect } = useAnnotation();
+  const { highlights, activeHighlight, handleBoxSelect, handleHighlightSelect, unlinkAnnotations } = useAnnotation();
+
+  // Handler for the link/unlink button
+  const handleLinkButtonClick = (highlight: TextHighlight) => {
+    if (highlight.boxRef) {
+      // Unlink if already linked
+      unlinkAnnotations(highlight.id, highlight.boxRef);
+      handleBoxSelect(null);
+    }
+  };
 
   return (
     <Card className="flex-1 flex flex-col h-full !p-px">
@@ -37,7 +48,18 @@ export default function TextAnnotationList() {
                 <Text ellipsize className="max-w-[200px]">
                   &ldquo;{highlight.text}&rdquo;
                 </Text>
-                <Tag color={highlight.color}>{highlight.boxRef ? 'Linked' : 'Unlinked'}</Tag>
+                <Tooltip content={highlight.boxRef ? 'Unlink box' : 'Link box'}>
+                  <Button
+                    icon={highlight.boxRef ? 'link' : 'unlink'}
+                    variant="minimal"
+                    size="small"
+                    disabled={isNull(highlight.boxRef)}
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleLinkButtonClick(highlight);
+                    }}
+                  />
+                </Tooltip>
               </div>
             </div>
           ))
