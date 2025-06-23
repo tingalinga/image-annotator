@@ -1,0 +1,10 @@
+.bounding-box {
+  background-color: #252a31;
+
+  border-width: 1.5px;
+  border-style: solid;
+  border-color: #ffffff33;
+  border-radius: 2px;
+
+  cursor: pointer;
+}

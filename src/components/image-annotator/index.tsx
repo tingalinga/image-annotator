@@ -2,7 +2,7 @@
 
 import type React from 'react';
 import { useRef, useEffect } from 'react';
-import { Button, Card, FileInput, NonIdealState, Slider, Text, Tooltip } from '@blueprintjs/core';
+import { Button, Card, Divider, FileInput, NonIdealState, Slider, Text, Tooltip } from '@blueprintjs/core';
 import { useAnnotation } from '@/hooks/use-annotation';
 import { useMouseInteractions } from '@/hooks/use-mouse-interactions';
 import { useImageLoader } from '@/hooks/use-image-loader';
@@ -125,6 +125,9 @@ export default function ImageAnnotator() {
           </Tooltip>
         </div>
       </div>
+
+      <Divider className="!m-0" />
+
       <div
         className={classNames('min-h-[400px] flex items-center justify-center p-px', {
           'bp5-skeleton': isLoading || !initialized,

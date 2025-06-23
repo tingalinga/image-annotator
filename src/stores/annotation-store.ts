@@ -137,8 +137,11 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => {
         const highlight = findHighlightById(highlights, activeHighlight!);
         if (highlight && !highlight.boxRef) {
           get().linkAnnotations(boxId!, activeHighlight!);
+          return;
         }
       }
+
+      set({ activeHighlight: null });
     },
 
     handleHighlightSelect: (highlightId: string | null) => {
@@ -156,14 +159,16 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => {
         set({ activeBox: selectedHighlight.boxRef });
         return;
       }
-
       // Auto-link if enabled and there's an active box without a highlight
       if (autoLink && validateId(activeBox)) {
         const box = findBoxById(boxes, activeBox!);
         if (box && !box.textRef) {
           get().linkAnnotations(activeBox!, highlightId!);
+          return;
         }
       }
+
+      set({ activeBox: null });
     },
 
     clearAnnotations: () => {
