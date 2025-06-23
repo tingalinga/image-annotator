@@ -1,12 +1,13 @@
 'use client';
 
+import { Button, Navbar, Switch } from '@blueprintjs/core';
+import { ChangeEvent } from 'react';
+
 import BoundingBoxList from '@/components/bounding-box-list';
 import ImageAnnotator from '@/components/image-annotator';
 import TextAnnotationList from '@/components/text-annotation-list';
 import TextAnnotator from '@/components/text-annotator';
 import { useAnnotation } from '@/hooks/use-annotation';
-import { Button, Navbar, Switch } from '@blueprintjs/core';
-import { ChangeEvent } from 'react';
 
 export default function Annotator() {
   const { autoLink, setAutoLink, clearAnnotations, exportAnnotations } = useAnnotation();

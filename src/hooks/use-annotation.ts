@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
+
 import { useAnnotationStore } from '@/stores/annotation-store';
 import { BoundingBox, TextHighlight } from '@/typings';
 

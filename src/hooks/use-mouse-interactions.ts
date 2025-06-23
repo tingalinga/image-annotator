@@ -1,15 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useCallback,useState } from 'react';
+
 import type { BoundingBox } from '@/typings';
 import {
-  getResizeHandleAtPosition,
-  screenToCanvas,
-  getBoxAtPosition,
   createBoundingBox,
-  updateBoxPosition,
-  updateBoxSize,
+  getBoxAtPosition,
+  getResizeHandleAtPosition,
   MIN_BOX_SIZE,
   MIN_DRAW_SIZE,
   RESIZE_CURSORS,
+  screenToCanvas,
+  updateBoxPosition,
+  updateBoxSize,
 } from '@/utils/image-annotator';
 
 interface MouseInteractionsState {

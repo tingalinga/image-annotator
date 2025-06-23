@@ -1,9 +1,10 @@
-import { useAnnotation } from '@/hooks/use-annotation';
-import { Button, Card, Divider, NonIdealState, NonIdealStateIconSize, Tag, Text, Tooltip } from '@blueprintjs/core';
-
 import './index.css';
-import { TextHighlight } from '@/typings';
+
+import { Button, Card, Divider, NonIdealState, NonIdealStateIconSize, Tag, Text, Tooltip } from '@blueprintjs/core';
 import { isNull } from 'lodash-es';
+
+import { useAnnotation } from '@/hooks/use-annotation';
+import { TextHighlight } from '@/typings';
 
 export default function TextAnnotationList() {
   const { highlights, activeHighlight, handleBoxSelect, handleHighlightSelect, unlinkAnnotations, deleteHighlight } =

@@ -1,4 +1,5 @@
 import type { BoundingBox } from '@/typings';
+
 import { getResizeHandles, HANDLE_SIZE } from './image-annotator';
 
 interface DrawOptions {

@@ -1,8 +1,10 @@
-import { useAnnotation } from '@/hooks/use-annotation';
-import { Button, Card, Divider, NonIdealState, NonIdealStateIconSize, Tag, Text, Tooltip } from '@blueprintjs/core';
-import { BoundingBox } from '@/typings';
-import { isNull } from 'lodash-es';
 import './index.css';
+
+import { Button, Card, Divider, NonIdealState, NonIdealStateIconSize, Tag, Text, Tooltip } from '@blueprintjs/core';
+import { isNull } from 'lodash-es';
+
+import { useAnnotation } from '@/hooks/use-annotation';
+import { BoundingBox } from '@/typings';
 
 /**
  * TODO: fix tooltip position for link/unlink button

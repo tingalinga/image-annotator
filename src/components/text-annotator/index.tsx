@@ -1,10 +1,11 @@
 'use client';
 
-import { TextHighlight } from '@/typings';
 import { Button, Card, Divider, Tag, Text, Tooltip } from '@blueprintjs/core';
 import type React from 'react';
-import { useRef, useState, useEffect } from 'react';
+import { useEffect,useRef, useState } from 'react';
+
 import { useAnnotation } from '@/hooks/use-annotation';
+import { TextHighlight } from '@/typings';
 
 /**
  * TODO: Support editing highlight by dragging instead of clicking reduce and extend buttons

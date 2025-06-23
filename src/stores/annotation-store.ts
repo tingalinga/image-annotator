@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+
 import { BoundingBox, TextHighlight } from '@/typings';
 
 interface AnnotationState {

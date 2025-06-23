@@ -1,13 +1,14 @@
 'use client';
 
-import type React from 'react';
-import { useRef, useEffect } from 'react';
 import { Button, Card, Divider, FileInput, NonIdealState, Slider, Text, Tooltip } from '@blueprintjs/core';
-import { useAnnotation } from '@/hooks/use-annotation';
-import { useMouseInteractions } from '@/hooks/use-mouse-interactions';
-import { useImageLoader } from '@/hooks/use-image-loader';
-import { drawCanvas } from '@/utils/canvas-drawing';
 import classNames from 'classnames';
+import type React from 'react';
+import { useEffect,useRef } from 'react';
+
+import { useAnnotation } from '@/hooks/use-annotation';
+import { useImageLoader } from '@/hooks/use-image-loader';
+import { useMouseInteractions } from '@/hooks/use-mouse-interactions';
+import { drawCanvas } from '@/utils/canvas-drawing';
 
 export default function ImageAnnotator() {
   const { boxes, setBoxes, activeBox, handleBoxSelect } = useAnnotation();
