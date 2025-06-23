@@ -1,4 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Image Annotator
+
+A web-based annotation tool built with Next.js for annotating images and text. Supports bounding box creation, text highlights, and linking between them. Designed for usability and extensibility.
+
+## Features
+
+- **Image Annotation**: Draw, move, and resize bounding boxes on images.
+- **Text Annotation**: Highlight text spans, with support for multi-line and overlapping highlights.
+- **Linking**: Link bounding boxes to text highlights and vice versa. Visual indication of linked items.
+- **Highlight Synchronization**: Highlights update automatically as you edit the text (insertion, deletion, typing within highlights, etc.).
+- **Unlinking**: Easily unlink boxes and highlights.
+- **Annotation Management**: Delete boxes or highlights, clear all annotations, and export annotation data.
+- **Modern UI**: Built with Blueprint.js and Tailwind CSS for a clean, responsive interface.
 
 ## Getting Started
 
@@ -16,21 +28,29 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Draw bounding boxes**: Click and drag on the image.
+- **Highlight text**: Select text with your mouse to create a highlight.
+- **Link/unlink**: Use the link/unlink buttons in the box and highlight lists.
+- **Edit text**: Use the edit mode to change the text. Highlights will update automatically.
+- **Delete**: Use the trash/delete icons to remove boxes or highlights.
+- **Export**: Export all annotations as JSON.
 
-## Learn More
+## Annotation Logic
 
-To learn more about Next.js, take a look at the following resources:
+- **Highlight synchronization**: When editing text, highlights shift and resize to stay in sync. If you type or delete inside or near a highlight, its start/end and text are updated. Highlights after the edit are shifted accordingly.
+- **Linked tags**: The "Linked" tag appears only once per unique highlight, even if the highlight spans multiple lines.
+- **Unlinking**: Unlink a box or highlight using the link/unlink button. Deleting a box or highlight also unlinks it from any associated items.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Developer Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Component structure**: Main logic is in `src/components/text-annotator` and `src/components/image-annotator`.
+- **Highlight update logic**: See `src/utils/text-highlights.ts` for text diffing and highlight synchronization.
+- **State management**: Uses Zustand for global annotation state.
+- **Styling**: Uses Tailwind CSS and Blueprint.js. (You can add or update styles in the relevant CSS modules.)
+- **Extensibility**: Utility functions and annotation logic are modular for easy extension.
 
-## Deploy on Vercel
+## Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Pull requests and issues are welcome! Please open an issue to discuss major changes.
