@@ -29,6 +29,8 @@ interface AnnotationState {
   clearAnnotations: () => void;
   exportAnnotations: () => void;
   unlinkAnnotations: (boxId: string, highlightId: string) => void;
+  deleteBox: (boxId: string) => void;
+  deleteHighlight: (highlightId: string) => void;
 }
 
 export const useAnnotationStore = create<AnnotationState>((set, get) => {
@@ -222,6 +224,24 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => {
         highlights: highlights.map(highlight =>
           highlight.id === highlightId && highlight.boxRef === boxId ? { ...highlight, boxRef: null } : highlight
         ),
+      });
+    },
+
+    deleteBox: (boxId: string) => {
+      const { boxes, highlights } = get();
+      set({
+        boxes: boxes.filter(box => box.id !== boxId),
+        highlights: highlights.map(h => (h.boxRef === boxId ? { ...h, boxRef: null } : h)),
+        activeBox: null,
+      });
+    },
+
+    deleteHighlight: (highlightId: string) => {
+      const { boxes, highlights } = get();
+      set({
+        highlights: highlights.filter(h => h.id !== highlightId),
+        boxes: boxes.map(b => (b.textRef === highlightId ? { ...b, textRef: null } : b)),
+        activeHighlight: null,
       });
     },
   };

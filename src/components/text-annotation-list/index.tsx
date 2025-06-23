@@ -6,7 +6,8 @@ import { TextHighlight } from '@/typings';
 import { isNull } from 'lodash-es';
 
 export default function TextAnnotationList() {
-  const { highlights, activeHighlight, handleBoxSelect, handleHighlightSelect, unlinkAnnotations } = useAnnotation();
+  const { highlights, activeHighlight, handleBoxSelect, handleHighlightSelect, unlinkAnnotations, deleteHighlight } =
+    useAnnotation();
 
   // Handler for the link/unlink button
   const handleLinkButtonClick = (highlight: TextHighlight) => {
@@ -48,18 +49,31 @@ export default function TextAnnotationList() {
                 <Text ellipsize className="max-w-[200px]">
                   &ldquo;{highlight.text}&rdquo;
                 </Text>
-                <Tooltip content={highlight.boxRef ? 'Unlink box' : 'Link box'}>
-                  <Button
-                    icon={highlight.boxRef ? 'link' : 'unlink'}
-                    variant="minimal"
-                    size="small"
-                    disabled={isNull(highlight.boxRef)}
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleLinkButtonClick(highlight);
-                    }}
-                  />
-                </Tooltip>
+                <div className="flex items-center gap-2">
+                  <Tooltip content={highlight.boxRef ? 'Unlink box' : 'Link box'}>
+                    <Button
+                      icon={highlight.boxRef ? 'link' : 'unlink'}
+                      variant="minimal"
+                      size="small"
+                      disabled={isNull(highlight.boxRef)}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleLinkButtonClick(highlight);
+                      }}
+                    />
+                  </Tooltip>
+                  <Tooltip content="Delete annotation">
+                    <Button
+                      icon="trash"
+                      variant="minimal"
+                      size="small"
+                      onClick={e => {
+                        e.stopPropagation();
+                        deleteHighlight(highlight.id);
+                      }}
+                    />
+                  </Tooltip>
+                </div>
               </div>
             </div>
           ))

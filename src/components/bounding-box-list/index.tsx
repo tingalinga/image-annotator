@@ -1,14 +1,14 @@
 import { useAnnotation } from '@/hooks/use-annotation';
 import { Button, Card, Divider, NonIdealState, NonIdealStateIconSize, Tag, Text, Tooltip } from '@blueprintjs/core';
-import './index.css';
 import { BoundingBox } from '@/typings';
 import { isNull } from 'lodash-es';
+import './index.css';
 
 /**
  * TODO: fix tooltip position for link/unlink button
  */
 export default function BoundingBoxList() {
-  const { boxes, activeBox, handleBoxSelect, handleHighlightSelect, unlinkAnnotations } = useAnnotation();
+  const { boxes, activeBox, handleBoxSelect, handleHighlightSelect, unlinkAnnotations, deleteBox } = useAnnotation();
 
   // Handler for the link/unlink button
   const handleLinkButtonClick = (box: BoundingBox) => {
@@ -48,18 +48,32 @@ export default function BoundingBoxList() {
             >
               <div className="flex items-center justify-between">
                 <Text>Box #{box.id.slice(0, 8)}</Text>
-                <Tooltip content={box.textRef ? 'Unlink annotation' : 'Link annotation'}>
-                  <Button
-                    icon={box.textRef ? 'link' : 'unlink'}
-                    variant="minimal"
-                    size="small"
-                    disabled={isNull(box.textRef)}
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleLinkButtonClick(box);
-                    }}
-                  />
-                </Tooltip>
+
+                <div className="flex items-center gap-2">
+                  <Tooltip content={box.textRef ? 'Unlink annotation' : 'Link annotation'}>
+                    <Button
+                      icon={box.textRef ? 'link' : 'unlink'}
+                      variant="minimal"
+                      size="small"
+                      disabled={isNull(box.textRef)}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleLinkButtonClick(box);
+                      }}
+                    />
+                  </Tooltip>
+                  <Tooltip content="Delete box">
+                    <Button
+                      icon="trash"
+                      variant="minimal"
+                      size="small"
+                      onClick={e => {
+                        e.stopPropagation();
+                        deleteBox(box.id);
+                      }}
+                    />
+                  </Tooltip>
+                </div>
               </div>
             </span>
           ))
