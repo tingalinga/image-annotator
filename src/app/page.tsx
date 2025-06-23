@@ -5,22 +5,11 @@ import ImageAnnotator from '@/components/image-annotator';
 import TextAnnotationList from '@/components/text-annotation-list';
 import TextAnnotator from '@/components/text-annotator';
 import { useAnnotation } from '@/hooks/use-annotation';
-import { Button, Card, H3, Icon, Navbar, Switch, Text } from '@blueprintjs/core';
+import { Button, Navbar, Switch } from '@blueprintjs/core';
 import { ChangeEvent } from 'react';
 
 export default function Annotator() {
-  const {
-    boxes,
-    highlights,
-    activeBox,
-    activeHighlight,
-    autoLink,
-    setAutoLink,
-    handleBoxSelect,
-    handleHighlightSelect,
-    clearAnnotations,
-    exportAnnotations,
-  } = useAnnotation();
+  const { autoLink, setAutoLink, clearAnnotations, exportAnnotations } = useAnnotation();
 
   const toggle = (setter: (value: boolean) => void) => {
     return (input: ChangeEvent<HTMLInputElement>) => {
