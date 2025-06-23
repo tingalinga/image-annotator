@@ -152,102 +152,114 @@ export default function TextAnnotator() {
   const renderHighlightedText = () => {
     if (!editableText) return null;
 
-    // Create an array of "markup points" - points where highlighting starts or ends
-    const markupPoints: {
-      position: number;
-      highlightId: string;
-      isStart: boolean;
-      color: string;
-      isActive: boolean;
-      hasLink: boolean;
-    }[] = [];
+    // If there is an active highlight, render it as a single unbroken span
+    if (activeHighlight) {
+      const active = highlights.find(h => h.id === activeHighlight);
+      if (active) {
+        const before = editableText.substring(0, active.start);
+        const highlighted = editableText.substring(active.start, active.end);
+        const after = editableText.substring(active.end);
+        return [
+          before && <span key="before">{before}</span>,
+          <span
+            key="active-highlight"
+            style={{
+              backgroundColor: `${active.color}40`,
+              border: `2px solid ${active.color}`,
+              padding: '2px 4px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'all 0.2s ease',
+            }}
+            className="hover:shadow-sm"
+            onClick={() => handleHighlightSelect(active.id)}
+          >
+            {highlighted}
+            {active.boxRef && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-18px',
+                  right: '0',
+                  fontSize: '10px',
+                  backgroundColor: active.color,
+                  color: '#fff',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  fontWeight: '500',
+                }}
+              >
+                Linked
+              </span>
+            )}
+          </span>,
+          after && <span key="after">{after}</span>,
+        ];
+      }
+    }
 
-    // Add all start and end points
+    // Otherwise, render all highlights as solid color, no gradient, allow overlap but no merging
+    // Create an array of markup points
+    const markupPoints: { position: number; highlightId: string; isStart: boolean; color: string; hasLink: boolean }[] =
+      [];
     highlights.forEach(highlight => {
       markupPoints.push({
         position: highlight.start,
         highlightId: highlight.id,
         isStart: true,
         color: highlight.color,
-        isActive: highlight.id === activeHighlight,
         hasLink: !!highlight.boxRef,
       });
-
       markupPoints.push({
         position: highlight.end,
         highlightId: highlight.id,
         isStart: false,
         color: highlight.color,
-        isActive: highlight.id === activeHighlight,
         hasLink: !!highlight.boxRef,
       });
     });
-
-    // Sort by position
-    markupPoints.sort((a, b) => {
-      if (a.position !== b.position) return a.position - b.position;
-      return a.isStart ? 1 : -1;
-    });
+    markupPoints.sort(
+      (a: { position: number; isStart: boolean }, b: { position: number; isStart: boolean }) =>
+        a.position - b.position || (a.isStart ? 1 : -1)
+    );
 
     const result = [];
     let lastPosition = 0;
-    const activeHighlights: {
-      id: string;
-      color: string;
-      isActive: boolean;
-      hasLink: boolean;
-    }[] = [];
-
-    // Process each markup point
+    const openHighlights = [];
     for (let i = 0; i < markupPoints.length; i++) {
       const point = markupPoints[i];
-
-      // Add text segment before this point
       if (point.position > lastPosition) {
         const segment = editableText.substring(lastPosition, point.position);
-
-        if (activeHighlights.length === 0) {
+        if (openHighlights.length === 0) {
           result.push(<span key={`text-${lastPosition}`}>{segment}</span>);
         } else {
-          const sortedHighlights = [...activeHighlights].sort((a, b) => {
-            if (a.isActive && !b.isActive) return 1;
-            if (!a.isActive && b.isActive) return -1;
-            return 0;
-          });
-
-          const backgroundColor = sortedHighlights.map(h => `${h.color}40`).join(', ');
-          const borderColor = sortedHighlights.find(h => h.isActive)?.color;
-          const hasLinks = sortedHighlights.some(h => h.hasLink);
-
+          // Use the topmost highlight for color
+          const top = openHighlights[openHighlights.length - 1];
           result.push(
             <span
               key={`text-${lastPosition}`}
               style={{
-                backgroundColor: sortedHighlights.length > 1 ? 'transparent' : backgroundColor,
-                background: sortedHighlights.length > 1 ? `linear-gradient(to right, ${backgroundColor})` : undefined,
+                backgroundColor: `${top.color}40`,
+                border: 'none',
                 padding: '2px 4px',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                border: borderColor ? `2px solid ${borderColor}` : 'none',
                 position: 'relative',
-                boxShadow: sortedHighlights.length > 1 ? '0 0 0 1px rgba(0,0,0,0.1)' : 'none',
                 transition: 'all 0.2s ease',
               }}
               className="hover:shadow-sm"
-              onClick={() => {
-                const topHighlight = sortedHighlights[sortedHighlights.length - 1];
-                handleHighlightSelect(topHighlight.id);
-              }}
+              onClick={() => handleHighlightSelect(top.highlightId)}
             >
               {segment}
-              {hasLinks && (
+              {top.hasLink && (
                 <span
                   style={{
                     position: 'absolute',
                     top: '-18px',
                     right: '0',
                     fontSize: '10px',
-                    backgroundColor: sortedHighlights.find(h => h.hasLink)?.color || '#000',
+                    backgroundColor: top.color,
                     color: '#fff',
                     padding: '2px 6px',
                     borderRadius: '4px',
@@ -261,30 +273,17 @@ export default function TextAnnotator() {
           );
         }
       }
-
-      // Update active highlights
       if (point.isStart) {
-        activeHighlights.push({
-          id: point.highlightId,
-          color: point.color,
-          isActive: point.isActive,
-          hasLink: point.hasLink,
-        });
+        openHighlights.push(point);
       } else {
-        const index = activeHighlights.findIndex(h => h.id === point.highlightId);
-        if (index !== -1) {
-          activeHighlights.splice(index, 1);
-        }
+        const idx = openHighlights.findIndex(h => h.highlightId === point.highlightId);
+        if (idx !== -1) openHighlights.splice(idx, 1);
       }
-
       lastPosition = point.position;
     }
-
-    // Add any remaining text
     if (lastPosition < editableText.length) {
       result.push(<span key={`text-${lastPosition}`}>{editableText.substring(lastPosition)}</span>);
     }
-
     return result;
   };
 
