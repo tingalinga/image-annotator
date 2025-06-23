@@ -6,6 +6,11 @@ import type React from 'react';
 import { useRef, useState, useEffect } from 'react';
 import { useAnnotation } from '@/hooks/use-annotation';
 
+/**
+ * TODO: Support editing highlight by dragging instead of clicking reduce and extend buttons
+ * TODO: Support context menu for highlights to: delete, unlink
+ * TODO: Fix renderHighlightedText logic
+ */
 export default function TextAnnotator() {
   const { highlights, setHighlights, activeHighlight, handleHighlightSelect, editableText } = useAnnotation();
 
