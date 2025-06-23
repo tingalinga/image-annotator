@@ -1,7 +1,7 @@
 'use client';
 
 import { TextHighlight } from '@/typings';
-import { Button } from '@blueprintjs/core';
+import { Button, Card, Divider, Tag, Text, Tooltip } from '@blueprintjs/core';
 import type React from 'react';
 import { useRef, useState, useEffect } from 'react';
 import { useAnnotation } from '@/hooks/use-annotation';
@@ -288,12 +288,67 @@ export default function TextAnnotator() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full space-y-4">
+    <Card className="flex-1 flex flex-col h-full !p-0 overflow-hidden">
+      <div className="flex px-2 py-1 justify-between items-center">
+        <div className="flex items-center gap-4">
+          <Text className="bp5-text-small font-bold">TEXT ANNOTATOR</Text>
+          <Tag>
+            {highlights.length} highlight{highlights.length !== 1 ? 's' : ''}
+          </Tag>
+        </div>
+
+        {/* Right */}
+        <div className="flex items-center gap-4">
+          {/* TODO: Remove and add to context menu + hotkey */}
+
+          {activeHighlight && (
+            <>
+              <Button
+                icon="minus"
+                size="small"
+                onClick={() => {
+                  setIsReducingHighlight(!isReducingHighlight);
+                  setIsExtendingHighlight(false);
+                }}
+                active={isReducingHighlight}
+                className="hover:shadow-sm transition-all"
+              >
+                Reduce
+              </Button>
+              <Button
+                icon="plus"
+                size="small"
+                onClick={() => {
+                  setIsExtendingHighlight(!isExtendingHighlight);
+                  setIsReducingHighlight(false);
+                }}
+                active={isExtendingHighlight}
+                className="hover:shadow-sm transition-all"
+              >
+                Extend
+              </Button>
+            </>
+          )}
+          <Tooltip content="Delete box">
+            <Button
+              icon="key-delete"
+              variant="minimal"
+              size="small"
+              onClick={deleteActiveHighlight}
+              disabled={!activeHighlight}
+              className="hover:shadow-sm transition-all"
+            />
+          </Tooltip>
+        </div>
+      </div>
+
+      <Divider className="!m-0" />
+
       {/* Text Content Area */}
-      <div className="flex-1 min-h-[400px] border rounded-lg bg-muted/20 overflow-hidden">
+      <div className="flex flex-col min-h-[400px]">
         <div
           ref={containerRef}
-          className="p-4 text-base leading-relaxed h-full overflow-auto"
+          className="flex-1 grow p-2 h-full leading-relaxed  m-px bg-[#1c2127] overflow-auto"
           onMouseUp={handleTextSelection}
         >
           {editableText ? (
@@ -303,48 +358,6 @@ export default function TextAnnotator() {
           )}
         </div>
       </div>
-
-      {/* Controls */}
-      <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-        <div className="text-sm text-muted-foreground font-medium">
-          {highlights.length} highlight{highlights.length !== 1 ? 's' : ''}
-        </div>
-
-        <div className="flex items-center gap-3">
-          {activeHighlight && (
-            <>
-              <Button
-                icon="plus"
-                onClick={() => {
-                  setIsExtendingHighlight(!isExtendingHighlight);
-                  setIsReducingHighlight(false);
-                }}
-                className="hover:shadow-sm transition-all"
-              >
-                Extend
-              </Button>
-              <Button
-                icon="minus"
-                onClick={() => {
-                  setIsReducingHighlight(!isReducingHighlight);
-                  setIsExtendingHighlight(false);
-                }}
-                className="hover:shadow-sm transition-all"
-              >
-                Reduce
-              </Button>
-            </>
-          )}
-          <Button
-            icon="delete"
-            onClick={deleteActiveHighlight}
-            disabled={!activeHighlight}
-            className="hover:shadow-sm transition-all"
-          >
-            Delete
-          </Button>
-        </div>
-      </div>
-    </div>
+    </Card>
   );
 }
