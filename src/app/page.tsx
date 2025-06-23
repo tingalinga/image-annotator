@@ -24,8 +24,14 @@ export default function Annotator() {
         <Navbar.Group align="left">
           <Navbar.Heading>Image Annotation Tool</Navbar.Heading>
         </Navbar.Group>
-        <Navbar.Group align="right">
-          <Switch id="auto-link" label="Auto-link annotations" checked={autoLink} onChange={toggle(setAutoLink)} />
+        <Navbar.Group align="right" className="flex item-center gap-2">
+          <Switch
+            id="auto-link"
+            label="Auto-link annotations"
+            checked={autoLink}
+            onChange={toggle(setAutoLink)}
+            className="!m-0"
+          />
           <Button icon="download" onClick={exportAnnotations} className="hover:bg-accent">
             Export
           </Button>
